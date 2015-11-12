@@ -1,0 +1,22 @@
+# Extracted from https://github.com/ulrich/macaron-factory/blob/master/.gitignore
+# Ignore all dotfiles...
+.*
+# except for .gitignore
+!.gitignore
+
+*.class
+db
+eclipse
+log
+logs
+modules
+precompiled
+project/project
+project/target
+target
+tmp
+bin
+test-result
+server.pid
+*.iml
+*.eml
