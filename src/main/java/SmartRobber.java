@@ -59,37 +59,35 @@ public class SmartRobber {
 
     //The HashMap stores the target house list with the HouseID:YES/NO as key:value pair
     static Map<Integer, String> robGuideList = new LinkedHashMap<Integer, String>();
-    Map<Integer, String> caseIgnoreFirstTargetHouseList = new LinkedHashMap<Integer, String>();
-    Map<Integer, String> caseIgnoreLastTargetHouseList = new LinkedHashMap<Integer, String>();
 
     /**
      *
-     * @param args
+     * @param args args
      */
     public static void main(String[] args) {
+        //get data from the json file
         Gson gson = new Gson();
         List<HouseNode> houses = new ArrayList<HouseNode>();
         try {
             BufferedReader br = new BufferedReader(new FileReader("input.json"));
             Type listType = new TypeToken<ArrayList<HouseNode>>(){}.getType();
             houses = gson.fromJson(br, listType);
-            System.out.println("size: "+houses.size());
+            System.out.println("The given json file size: "+houses.size());
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Cannot find file input.json");
         }
 
+        //run the smart robber iteratively
         SmartRobber robber = new SmartRobber();
-        robber.rob(houses);
+        robber.robRecursive(houses);
 
-
+        //flush output to output.txt file
         try {
             FileWriter fw = new FileWriter("output.txt", false);
             BufferedWriter out = new BufferedWriter(fw);
 
             for (Integer key : robGuideList.keySet()) {
-//                System.out.print("Key = " + key +"  ");
-//                System.out.println("Value = " + robGuideList.get(key));
                 out.append(robGuideList.get(key)+"\r\n");
             }
 
@@ -105,69 +103,36 @@ public class SmartRobber {
      *
      * @param houses , List of HouseNode from the json file
      */
-    private void rob(List<HouseNode> houses) {
+    private void robRecursive(List<HouseNode> houses) {
 
-        //init the targetHouseList for case 1
+        //init the target robGuideList
         for(int i=0; i<houses.size();i++){
-            caseIgnoreFirstTargetHouseList.put(i,"");
+            robGuideList.put(i,"");
         }
 
-        //init the targetHouseList for case 2
-        for(int i=0; i<houses.size();i++){
-            caseIgnoreLastTargetHouseList.put(i,"");
-        }
-
-        int totalProfit =0;
-        //if the data is null or empty
-        if (houses == null || houses.size()== 0){
-            System.out.println("Please make sure the data file input.json is not empty");
-            System.exit(-1);
-        }
+        int totalProfit;
 
         //divide the rob strategies into two cases: without lastNode or firstNode
-        if( robIgnoreFirstNode(houses, houses.size() - 1) >= robIgnoreLastNode(houses, houses.size() - 1)){
-            totalProfit = robIgnoreFirstNode(houses, houses.size() - 1);
+        if( robIgnoreFirstNode(houses, houses.size() - 1) > robIgnoreLastNode(houses, houses.size() - 1)){
+            totalProfit = robIgnoreFirstNode(houses, houses.size() - 1);//
+            System.out.println("Strategy: robLast ");
 
-            for (Map.Entry<Integer, Integer> entry : caseIgnoreFirst.entrySet()) {
-                System.out.print("Key = " + entry.getKey() +"  ");
-                System.out.println("Value = " + entry.getValue());
+            setRobGuideList(caseIgnoreFirst, houses);
 
-                if(caseIgnoreFirst.containsKey(entry.getKey() -1)) {
-                    if (entry.getValue() > caseIgnoreFirst.get(entry.getKey() - 1)) {
-                        caseIgnoreFirstTargetHouseList.put(entry.getKey(), "YES");
-                    }else{
-                        caseIgnoreFirstTargetHouseList.put(entry.getKey(), "NO");
-                    }
-                }
-            }
-
-            robGuideList = caseIgnoreFirstTargetHouseList;
         }else{
             totalProfit = robIgnoreLastNode(houses, houses.size() - 1);
-            for (Map.Entry<Integer, Integer> entry : caseIgnoreLast.entrySet()) {
-                System.out.print("Key = " + entry.getKey() +"  ");
-                System.out.println("Value = " + entry.getValue());
+            System.out.println("Strategy: robFirst");
 
-                if(caseIgnoreLast.containsKey(entry.getKey() -1)) {
-                    if (entry.getValue() > caseIgnoreLast.get(entry.getKey() - 1)) {
-                        caseIgnoreLastTargetHouseList.put(entry.getKey(), "YES");
-                    }else{
-                        caseIgnoreLastTargetHouseList.put(entry.getKey(), "NO");
-
-                    }
-                }
-            }
-
-            robGuideList = caseIgnoreLastTargetHouseList;
+            setRobGuideList(caseIgnoreLast, houses);
         }
-        System.out.println("Final profit: "+ totalProfit);
+        System.out.println("Final profit by robRecursive method: "+ totalProfit);
     }
 
     /**
      *
      * @param houses , List of HouseNode from the json file without the firstNode
      * @param n ,  n houses in the house list
-     * @return
+     * @return profit for the given n
      */
     private int robIgnoreFirstNode(List<HouseNode> houses, int n){
         if (caseIgnoreFirst.containsKey(n)) {
@@ -176,21 +141,14 @@ public class SmartRobber {
 
         int profit;
         //ignore first house when index == 0, P(0) = 0
+
         if (n <= 0) {
             profit = 0;
-        }
-        //
-        else if (n == 1){  //P(1) == V(1)
+        } else if (n == 1){  //P(1) == V(1)
             profit = houses.get(1).getValue();
-        }
-        else{ //P(n) = Max{V(n)+ P(n-2), P(n-1) }
-            if(houses.get(n).getValue() + robIgnoreFirstNode(houses, n-2) >
-                    houses.get(n - 1).getValue() +robIgnoreFirstNode(houses, n-3)){
-                profit = houses.get(n).getValue() + robIgnoreFirstNode(houses, n-2);
-            }else{
-                profit =  houses.get(n - 1).getValue() +robIgnoreFirstNode(houses, n-3);
-            }
-
+        } else{ //P(n) = Max{V(n)+ P(n-2), P(n-1) }
+            profit = Math.max(houses.get(n).getValue() + robIgnoreFirstNode(houses, n-2),
+                    houses.get(n - 1).getValue() +robIgnoreFirstNode(houses, n-3));
         }
         caseIgnoreFirst.put(n, profit);
         return profit;
@@ -201,7 +159,7 @@ public class SmartRobber {
      *
      * @param houses , List of HouseNode from the json file without the lastNode
      * @param n, n houses in the house list
-     * @return
+     * @return profit for the given n
      */
     private int robIgnoreLastNode(List<HouseNode> houses, int n){
         if (caseIgnoreLast.containsKey(n)) {
@@ -211,27 +169,52 @@ public class SmartRobber {
         int profit;
         if (n < 0){  // P(0) = 0
             return 0;
-        }
-        else if (n == 0){  //P(1) = V(1)
+        } else if (n == 0){  //P(1) = V(1)
             profit = houses.get(0).getValue();
 
-        }
-        else{  //P(n) = Max{V(n)+ P(n-2), P(n-1) }
+        } else{  //P(n) = Max{V(n)+ P(n-2), P(n-1) }
             if (n == houses.size() - 1) {   //ignoreLastNode
                 profit = robIgnoreLastNode(houses, n-1);
             } else {
-                if(houses.get(n).getValue() + robIgnoreFirstNode(houses, n-2) >
-                        houses.get(n - 1).getValue() +robIgnoreFirstNode(houses, n-3)){
-                    profit = houses.get(n).getValue() + robIgnoreFirstNode(houses, n-2);
-                }else{
-                    profit = houses.get(n - 1).getValue() +robIgnoreFirstNode(houses, n-3);
-
-                }
-
+                profit = Math.max(houses.get(n).getValue() + robIgnoreLastNode(houses, n-2),
+                        houses.get(n - 1).getValue() +robIgnoreLastNode(houses, n-3));
             }
         }
         caseIgnoreLast.put(n, profit);
         return profit;
     }
+
+
+    private void setRobGuideList(Map<Integer, Integer> map, List<HouseNode> houses){
+        for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
+//            System.out.print("Key = " + entry.getKey() +"  ");
+//            System.out.println("Value = " + entry.getValue());
+
+            if(map.containsKey(entry.getKey() -1)) {
+                //TODO here is a bug
+                if (entry.getValue() > map.get(entry.getKey() - 1)) {
+                    if(houses.get(entry.getKey()).isMax()) {
+                        robGuideList.put(entry.getKey(), "YES");
+                    }else{
+                        robGuideList.put(entry.getKey(), "NO");
+                    }
+                }else{
+                    robGuideList.put(entry.getKey(), "NO");
+                }
+            }else{
+                robGuideList.put(entry.getKey(), "NO");
+            }
+
+            if(entry.getKey() == 0){
+                if(map.get(0) > 0){
+                    robGuideList.put(0, "YES");
+                }else{
+                    robGuideList.put(0, "NO");
+                }
+            }
+        }
+
+    }
+
 
 }

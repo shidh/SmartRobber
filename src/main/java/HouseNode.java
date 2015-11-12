@@ -36,4 +36,12 @@ public class HouseNode {
     public void setValue(int value) {
         this.value = value;
     }
+
+    public boolean isMax(){
+        if(value == Math.max(Math.max(prev, value), next)){
+            return true;
+        }else{
+            return false;
+        }
+    }
 }
