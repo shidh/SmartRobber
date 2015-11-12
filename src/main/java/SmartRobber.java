@@ -1,5 +1,6 @@
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
 import java.io.*;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -48,11 +49,15 @@ public class SmartRobber {
        P(2) = V(2)
        P(3) = Max{V(3), V(2)}
        P(4) = Max{V(4)+V(2),  Max{V(3), V(2)} } = Max{V(4)+P(2),  P(3) }
+       ...
        P(n) = Max{V(n)+ P(n-2), P(n-1) }  State Transfer function!!!
      */
 
+    //The HashMap stores the profile state list with the HouseID:CurrentProfit as kay:value pair
     Map<Integer, Integer> caseIgnoreFirst = new LinkedHashMap<Integer, Integer>();
     Map<Integer, Integer> caseIgnoreLast = new LinkedHashMap<Integer, Integer>();
+
+    //The HashMap stores the target house list with the HouseID:YES/NO as key:value pair
     static Map<Integer, String> robGuideList = new LinkedHashMap<Integer, String>();
     Map<Integer, String> caseIgnoreFirstTargetHouseList = new LinkedHashMap<Integer, String>();
     Map<Integer, String> caseIgnoreLastTargetHouseList = new LinkedHashMap<Integer, String>();
@@ -79,13 +84,13 @@ public class SmartRobber {
 
 
         try {
-            FileWriter fw = new FileWriter("output.txt", true);
+            FileWriter fw = new FileWriter("output.txt", false);
             BufferedWriter out = new BufferedWriter(fw);
 
             for (Integer key : robGuideList.keySet()) {
-                System.out.print("Key = " + key +"  ");
-                System.out.println("Value = " + robGuideList.get(key));
-                out.write(robGuideList.get(key)+"\r\n ");
+//                System.out.print("Key = " + key +"  ");
+//                System.out.println("Value = " + robGuideList.get(key));
+                out.append(robGuideList.get(key)+"\r\n");
             }
 
             out.flush();
@@ -102,17 +107,15 @@ public class SmartRobber {
      */
     private void rob(List<HouseNode> houses) {
 
-        //init the targetHouseList
+        //init the targetHouseList for case 1
         for(int i=0; i<houses.size();i++){
             caseIgnoreFirstTargetHouseList.put(i,"");
         }
-        //caseIgnoreFirstTargetHouseList.put(0,"NO");
 
-        //init the targetHouseList
+        //init the targetHouseList for case 2
         for(int i=0; i<houses.size();i++){
             caseIgnoreLastTargetHouseList.put(i,"");
         }
-        //caseIgnoreFirstTargetHouseList.put(houses.size()-1,"NO");
 
         int totalProfit =0;
         //if the data is null or empty
@@ -124,9 +127,37 @@ public class SmartRobber {
         //divide the rob strategies into two cases: without lastNode or firstNode
         if( robIgnoreFirstNode(houses, houses.size() - 1) >= robIgnoreLastNode(houses, houses.size() - 1)){
             totalProfit = robIgnoreFirstNode(houses, houses.size() - 1);
+
+            for (Map.Entry<Integer, Integer> entry : caseIgnoreFirst.entrySet()) {
+                System.out.print("Key = " + entry.getKey() +"  ");
+                System.out.println("Value = " + entry.getValue());
+
+                if(caseIgnoreFirst.containsKey(entry.getKey() -1)) {
+                    if (entry.getValue() > caseIgnoreFirst.get(entry.getKey() - 1)) {
+                        caseIgnoreFirstTargetHouseList.put(entry.getKey(), "YES");
+                    }else{
+                        caseIgnoreFirstTargetHouseList.put(entry.getKey(), "NO");
+                    }
+                }
+            }
+
             robGuideList = caseIgnoreFirstTargetHouseList;
         }else{
             totalProfit = robIgnoreLastNode(houses, houses.size() - 1);
+            for (Map.Entry<Integer, Integer> entry : caseIgnoreLast.entrySet()) {
+                System.out.print("Key = " + entry.getKey() +"  ");
+                System.out.println("Value = " + entry.getValue());
+
+                if(caseIgnoreLast.containsKey(entry.getKey() -1)) {
+                    if (entry.getValue() > caseIgnoreLast.get(entry.getKey() - 1)) {
+                        caseIgnoreLastTargetHouseList.put(entry.getKey(), "YES");
+                    }else{
+                        caseIgnoreLastTargetHouseList.put(entry.getKey(), "NO");
+
+                    }
+                }
+            }
+
             robGuideList = caseIgnoreLastTargetHouseList;
         }
         System.out.println("Final profit: "+ totalProfit);
@@ -151,26 +182,17 @@ public class SmartRobber {
         //
         else if (n == 1){  //P(1) == V(1)
             profit = houses.get(1).getValue();
-            caseIgnoreFirstTargetHouseList.put(1, "YES");
         }
         else{ //P(n) = Max{V(n)+ P(n-2), P(n-1) }
-//            profit = Math.max(houses.get(n).getValue() + robIgnoreFirstNode(houses, n-2),
-//                              houses.get(n - 1).getValue() +robIgnoreFirstNode(houses, n-3));
-
             if(houses.get(n).getValue() + robIgnoreFirstNode(houses, n-2) >
                     houses.get(n - 1).getValue() +robIgnoreFirstNode(houses, n-3)){
                 profit = houses.get(n).getValue() + robIgnoreFirstNode(houses, n-2);
-                caseIgnoreFirstTargetHouseList.put(n, "YES");
             }else{
                 profit =  houses.get(n - 1).getValue() +robIgnoreFirstNode(houses, n-3);
-                caseIgnoreFirstTargetHouseList.put(n-1, "YES");
             }
 
         }
         caseIgnoreFirst.put(n, profit);
-//        System.out.println("key n: "+n);
-//        System.out.println("value profit: "+profit);
-
         return profit;
     }
 
@@ -192,25 +214,20 @@ public class SmartRobber {
         }
         else if (n == 0){  //P(1) = V(1)
             profit = houses.get(0).getValue();
-            caseIgnoreLastTargetHouseList.put(0, "YES");
 
         }
         else{  //P(n) = Max{V(n)+ P(n-2), P(n-1) }
             if (n == houses.size() - 1) {   //ignoreLastNode
                 profit = robIgnoreLastNode(houses, n-1);
             } else {
-//                profit = Math.max(houses.get(n).getValue() + robIgnoreFirstNode(houses, n-2),
-//                                  houses.get(n - 1).getValue() +robIgnoreFirstNode(houses, n-3));
-
                 if(houses.get(n).getValue() + robIgnoreFirstNode(houses, n-2) >
                         houses.get(n - 1).getValue() +robIgnoreFirstNode(houses, n-3)){
                     profit = houses.get(n).getValue() + robIgnoreFirstNode(houses, n-2);
-                    caseIgnoreLastTargetHouseList.put(n, "YES");
                 }else{
                     profit = houses.get(n - 1).getValue() +robIgnoreFirstNode(houses, n-3);
-                    caseIgnoreLastTargetHouseList.put(n-1, "YES");
 
                 }
+
             }
         }
         caseIgnoreLast.put(n, profit);
