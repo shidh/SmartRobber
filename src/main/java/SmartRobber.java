@@ -79,7 +79,7 @@ public class SmartRobber {
 
         //run the smart robber recursively
         SmartRobber robber = new SmartRobber();
-        robber.robRecursive(houses);
+        System.out.println("Final profit by robRecursive method: "+ robber.robRecursive(houses));
 
         //flush output to output.txt file
         try {
@@ -102,29 +102,26 @@ public class SmartRobber {
      *
      * @param houses , List of HouseNode from the json file
      */
-    private void robRecursive(List<HouseNode> houses) {
+    public int robRecursive(List<HouseNode> houses) {
 
         //init the target robGuideList
         for(int i=0; i<houses.size();i++){
             robGuideList.put(i,"");
         }
 
-        int totalProfit;
 
         //divide the rob strategies into two cases: without lastNode or firstNode
         if( robIgnoreFirstNode(houses, houses.size() - 1) > robIgnoreLastNode(houses, houses.size() - 1)){
-            totalProfit = robIgnoreFirstNode(houses, houses.size() - 1);//
             System.out.println("Strategy: robLast ");
-
             setRobGuideList(caseIgnoreFirst, houses);
+            return robIgnoreFirstNode(houses, houses.size() - 1);
 
         }else{
-            totalProfit = robIgnoreLastNode(houses, houses.size() - 1);
             System.out.println("Strategy: robFirst");
-
             setRobGuideList(caseIgnoreLast, houses);
+            return robIgnoreLastNode(houses, houses.size() - 1);
+
         }
-        System.out.println("Final profit by robRecursive method: "+ totalProfit);
     }
 
     /**
