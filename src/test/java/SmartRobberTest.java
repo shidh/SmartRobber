@@ -1,11 +1,8 @@
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +18,10 @@ public class SmartRobberTest {
     @Test
     public void noAdjacentHouseCanBeRobbed() {
 
-        SmartRobber.main();
+        SmartRobber robber = new SmartRobber();
+        List<HouseNode> houses = robber.getHouses();
+
+        robber.robRecursive(houses);
         List<String> output = readOutputFile();
 
         //Test case1: assert statements no two "YES" as neighbor
@@ -36,16 +36,9 @@ public class SmartRobberTest {
     @Test
     public void expectedProfitShouldBeSame() {
         int profit = 0;
-        Gson gson = new Gson();
-        List<HouseNode> houses = new ArrayList<HouseNode>();
-        try {
-            BufferedReader br = new BufferedReader(new FileReader("input.json"));
-            Type listType = new TypeToken<ArrayList<HouseNode>>(){}.getType();
-            houses = gson.fromJson(br, listType);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Cannot find file input.json");
-        }
+        SmartRobber robber = new SmartRobber();
+
+        List<HouseNode> houses = robber.getHouses();
 
         //Test case2: assert the total profit by following the YES/NO list equals the calculation
         List<String> output = readOutputFile();
@@ -54,7 +47,7 @@ public class SmartRobberTest {
                 profit += houses.get(i).getValue();
             }
         }
-        assertEquals(new SmartRobber().robRecursive(houses), profit);
+        assertEquals(robber.robRecursive(houses), profit);
     }
 
 

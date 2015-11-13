@@ -63,40 +63,17 @@ public class SmartRobber {
     /**
      *
      */
-    public static void main() {
+    public static void main(String[] args) {
         //get data from the json file
-        Gson gson = new Gson();
-        List<HouseNode> houses = new ArrayList<HouseNode>();
-        try {
-            BufferedReader br = new BufferedReader(new FileReader("input.json"));
-            Type listType = new TypeToken<ArrayList<HouseNode>>(){}.getType();
-            houses = gson.fromJson(br, listType);
-            System.out.println("The given json file size: "+houses.size());
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Cannot find file input.json");
-        }
+        List <HouseNode> houses = getHouses();
 
         //run the smart robber recursively
         SmartRobber robber = new SmartRobber();
         System.out.println("Final profit by robRecursive method: "+ robber.robRecursive(houses));
 
         //flush output to output.txt file
-        try {
-            FileWriter fw = new FileWriter("output.txt", false);
-            BufferedWriter out = new BufferedWriter(fw);
-
-            for (Integer key : robGuideList.keySet()) {
-                out.append(robGuideList.get(key)+"\r\n");
-            }
-
-            out.flush();
-            out.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Cannot write into file output.txt, check your disk or permissions");
-        }
-}
+        writeOutput();
+    }
 
     /**
      *
@@ -142,7 +119,12 @@ public class SmartRobber {
             profit = 0;
         } else if (n == 1){  //P(1) == V(1)
             profit = houses.get(1).getValue();
-        } else{ //P(n) = Max{V(n)+ P(n-2), P(n-1) }
+        } else if(n==2){
+            profit = houses.get(1).getValue();
+        } else if(n==3){
+            profit = Math.max(houses.get(1).getValue(), houses.get(2).getValue());
+        }
+        else{ //P(n) = Max{V(n)+ P(n-2), P(n-1) }
             profit = Math.max(houses.get(n).getValue() + robIgnoreFirstNode(houses, n-2),
                     houses.get(n - 1).getValue() +robIgnoreFirstNode(houses, n-3));
         }
@@ -165,7 +147,7 @@ public class SmartRobber {
         int profit;
         if (n < 0){  // P(0) = 0
             return 0;
-        } else if (n == 0){  //P(1) = V(1)
+        } else if (n == 0) {  //P(1) = V(1)
             profit = houses.get(0).getValue();
 
         } else{  //P(n) = Max{V(n)+ P(n-2), P(n-1) }
@@ -210,6 +192,39 @@ public class SmartRobber {
             }
         }
 
+    }
+
+
+    public static List<HouseNode> getHouses(){
+        Gson gson = new Gson();
+        List<HouseNode> houses = new ArrayList<HouseNode>();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("input.json"));
+            Type listType = new TypeToken<ArrayList<HouseNode>>(){}.getType();
+            houses = gson.fromJson(br, listType);
+            System.out.println("The given json file size: "+houses.size());
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Cannot find file input.json");
+        }
+        return houses;
+    }
+
+    public static void writeOutput() {
+        try {
+            FileWriter fw = new FileWriter("output.txt", false);
+            BufferedWriter out = new BufferedWriter(fw);
+
+            for (Integer key : robGuideList.keySet()) {
+                out.append(robGuideList.get(key) + "\r\n");
+            }
+
+            out.flush();
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Cannot write into file output.txt, check your disk or permissions");
+        }
     }
 
 
