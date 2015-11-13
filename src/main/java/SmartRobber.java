@@ -62,9 +62,8 @@ public class SmartRobber {
 
     /**
      *
-     * @param args args
      */
-    public static void main(String[] args) {
+    public static void main() {
         //get data from the json file
         Gson gson = new Gson();
         List<HouseNode> houses = new ArrayList<HouseNode>();
@@ -78,7 +77,7 @@ public class SmartRobber {
             System.out.println("Cannot find file input.json");
         }
 
-        //run the smart robber iteratively
+        //run the smart robber recursively
         SmartRobber robber = new SmartRobber();
         robber.robRecursive(houses);
 
