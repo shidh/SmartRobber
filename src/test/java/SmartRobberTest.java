@@ -22,21 +22,20 @@ public class SmartRobberTest {
     public void noAdjacentHouseCanBeRobbed() {
 
         SmartRobber.main();
-        List<String> output = new ArrayList<String>();
-        int profit = 0;
-        try {
-            BufferedReader br = new BufferedReader(new FileReader("output.txt"));
-                String line;
-                while ((line = br.readLine()) != null) {
-                    output.add(line);
-                }
-            }
-        catch (IOException e1) {
-            e1.printStackTrace();
-            System.out.println("Cannot find file output.txt");
+        List<String> output = readOutputFile();
+
+        //Test case1: assert statements no two "YES" as neighbor
+        assertFalse(output.get(0).trim().equals("YES") && output.get(output.size()-1).trim().equals("YES"));
+        for(int i = 1; i<output.size()-1; i++){
+            assertFalse(output.get(i).trim().equals("YES") && output.get(i+1).trim().equals("YES"));
         }
 
+    }
 
+
+    @Test
+    public void expectedProfitShouldBeSame() {
+        int profit = 0;
         Gson gson = new Gson();
         List<HouseNode> houses = new ArrayList<HouseNode>();
         try {
@@ -48,21 +47,35 @@ public class SmartRobberTest {
             System.out.println("Cannot find file input.json");
         }
 
-
-        //Test case1: assert statements no two "YES" as neighbor
-        assertFalse(output.get(0).trim().equals("YES") && output.get(output.size()-1).trim().equals("YES"));
-        for(int i = 1; i<output.size()-1; i++){
-            assertFalse(output.get(i).trim().equals("YES") && output.get(i+1).trim().equals("YES"));
-        }
-
-
         //Test case2: assert the total profit by following the YES/NO list equals the calculation
+        List<String> output = readOutputFile();
         for(int i = 0; i<output.size(); i++){
             if(output.get(i).equals("YES")){
                 profit += houses.get(i).getValue();
             }
         }
         assertEquals(new SmartRobber().robRecursive(houses), profit);
-
     }
+
+
+    /**
+     * helper method to read the output file
+     * @return
+     */
+    private List<String> readOutputFile(){
+        List<String> output = new ArrayList<String>();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("output.txt"));
+            String line;
+            while ((line = br.readLine()) != null) {
+                output.add(line);
+            }
+        }
+        catch (IOException e1) {
+            e1.printStackTrace();
+            System.out.println("Cannot find file output.txt");
+        }
+        return output;
+    }
+
 }
