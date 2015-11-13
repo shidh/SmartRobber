@@ -69,8 +69,9 @@ public class SmartRobber {
 
         //run the smart robber recursively
         SmartRobber robber = new SmartRobber();
-        System.out.println("Final profit by robRecursive method: "+ robber.robRecursive(houses));
-
+//        System.out.println("Final profit by robRecursive method: "+ robber.robRecursive(houses));
+//        System.out.println("Final profit by robIterator method: "+ robber.robIterator(houses));
+        System.out.println("Final profit by robWithMemPath method: "+robber.robWithMemPath(houses));
         //flush output to output.txt file
         writeOutput();
     }
@@ -119,12 +120,7 @@ public class SmartRobber {
             profit = 0;
         } else if (n == 1){  //P(1) == V(1)
             profit = houses.get(1).getValue();
-        } else if(n==2){
-            profit = houses.get(1).getValue();
-        } else if(n==3){
-            profit = Math.max(houses.get(1).getValue(), houses.get(2).getValue());
-        }
-        else{ //P(n) = Max{V(n)+ P(n-2), P(n-1) }
+        } else{ //P(n) = Max{V(n)+ P(n-2), P(n-1) }
             profit = Math.max(houses.get(n).getValue() + robIgnoreFirstNode(houses, n-2),
                     houses.get(n - 1).getValue() +robIgnoreFirstNode(houses, n-3));
         }
@@ -163,33 +159,59 @@ public class SmartRobber {
     }
 
 
+
     private void setRobGuideList(Map<Integer, Integer> map, List<HouseNode> houses){
+        for(int i=houses.size()-1; i>=2; i--){
+            //P(n) = Max{V(n)+ P(n-2), P(n-1) }
+
+            if(map.containsKey(i-2) && map.containsKey(i)) {
+                if (houses.get(i).getValue() + map.get(i - 2) == map.get(i)) {
+                    robGuideList.put(i, "YES");
+                } else {
+                    robGuideList.put(i, "NO");
+                }
+            }else{
+                robGuideList.put(i, "NO");
+            }
+
+        }
+
         for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
 //            System.out.print("Key = " + entry.getKey() +"  ");
 //            System.out.println("Value = " + entry.getValue());
 
-            if(map.containsKey(entry.getKey() -1)) {
-                //TODO here is a bug
-                if (entry.getValue() > map.get(entry.getKey() - 1)) {
-                    if(houses.get(entry.getKey()).isMax()) {
-                        robGuideList.put(entry.getKey(), "YES");
-                    }else{
-                        robGuideList.put(entry.getKey(), "NO");
-                    }
-                }else{
-                    robGuideList.put(entry.getKey(), "NO");
-                }
-            }else{
-                robGuideList.put(entry.getKey(), "NO");
-            }
+//            if(map.containsKey(entry.getKey() -1)) {
+//                if (entry.getValue() - map.get(entry.getKey() - 1) == houses.get(entry.getKey()).getValue()) {
+//                    robGuideList.put(entry.getKey(), "YES");
+//                } else {
+//                    robGuideList.put(entry.getKey(), "NO");
+//                }
+//            }else{
+//                robGuideList.put(entry.getKey(), "NO");
+//            }
 
-            if(entry.getKey() == 0){
-                if(map.get(0) > 0){
-                    robGuideList.put(0, "YES");
-                }else{
-                    robGuideList.put(0, "NO");
-                }
-            }
+
+//            if(map.containsKey(entry.getKey() -1)) {
+//                if (entry.getValue() > map.get(entry.getKey() - 1)) {
+//                    if(houses.get(entry.getKey()).isMax()) {
+//                        robGuideList.put(entry.getKey(), "YES");
+//                    }else{
+//                        robGuideList.put(entry.getKey(), "NO");
+//                    }
+//                }else{
+//                    robGuideList.put(entry.getKey(), "NO");
+//                }
+//            }else{
+//                robGuideList.put(entry.getKey(), "NO");
+//            }
+//
+//            if(entry.getKey() == 0){
+//                if(map.get(0) > 0){
+//                    robGuideList.put(0, "YES");
+//                }else{
+//                    robGuideList.put(0, "NO");
+//                }
+//            }
         }
 
     }
@@ -225,6 +247,107 @@ public class SmartRobber {
             e.printStackTrace();
             System.out.println("Cannot write into file output.txt, check your disk or permissions");
         }
+    }
+
+
+    /**
+     *
+     * @param houses , List of HouseNode from the json file without the lastNode
+     * @return total final profit
+     */
+    private int robIterator(List<HouseNode> houses) {
+        if(houses==null||houses.size()==0)
+            return 0;
+
+        int n = houses.size();
+
+        if(n==1){
+            return houses.get(0).getValue();
+        }
+
+        if(n==2){
+            return Math.max(houses.get(1).getValue(), houses.get(0).getValue());
+        }
+
+        //ignore first house
+        int[] profitRobLast = new int[n+1];
+        profitRobLast[0]=0;
+        profitRobLast[1]=houses.get(1).getValue();
+        for(int i=2; i<n; i++){ //P(n) = Max{V(n)+ P(n-2), P(n-1) }
+            profitRobLast[i] = Math.max(profitRobLast[i-2]+houses.get(i).getValue(), profitRobLast[i-1]);
+        }
+
+        //ignore last house
+        int[] profitRobFirst = new int[n+1];
+        profitRobFirst[0]=0;
+        profitRobFirst[1]=houses.get(0).getValue();
+
+        for(int i=2; i<n; i++){
+            profitRobFirst[i] = Math.max(profitRobFirst[i-2] + houses.get(i-1).getValue(), profitRobFirst[i-1]);
+        }
+        return Math.max(profitRobLast[n-1], profitRobFirst[n-1]);
+    }
+
+
+    private int robWithMemPath(List<HouseNode> houses){
+        if(houses==null||houses.size()==0)
+            return 0;
+
+        int n = houses.size();
+
+        if(n==1){
+            return houses.get(0).getValue();
+        }
+
+        if(n==2){
+            return Math.max(houses.get(1).getValue(), houses.get(0).getValue());
+        }
+
+        // profit P(index, isRob)                 path(index, isRob) = isRob for index-1
+        // P(n, 0) = max{P(n-1,0), P(n-1, 1)}     Path[n, 0] = P(n-1, 0) > P(n-1 , 1) ? 0: 1
+        // P(n, 1) = max{P(n-1,0)+ V(n)           Path[n, 1] = 0
+
+        // GetPath:
+        //         Path[n, 0] = ?   1 ->   Path[n-1, 1] :  0 -> Path[n-1,0]         .... Path[0,0]
+        //         Path[n, 1] = 0}
+
+        //ignore last house
+        int[][] profitRobFirst = new int[n][2];
+
+        int[][] path = new int[n][2];
+
+        profitRobFirst[0][0]= 0;
+        profitRobFirst[1][1]=houses.get(0).getValue();
+        robGuideList.put(1, "YES");
+
+
+        //get profit
+        for(int i=2; i<n; i++){
+            profitRobFirst[i][0] = Math.max(profitRobFirst[i-1][0] , profitRobFirst[i-1][1]);
+            path[i][0] = (profitRobFirst[i-1][0] > profitRobFirst[i-1][1])? 0:1;
+
+            profitRobFirst[i][1] = Math.max(profitRobFirst[i-1][0] , houses.get(i).getValue() );
+            path[i][1] = 0;
+        }
+
+        //trace path
+        int preview = 0;
+        for(int i=n-1; i>2; i--) {
+            if(path[i][preview] == 1){
+                robGuideList.put(i-1, "YES");
+                preview =1;
+
+            }else if(path[i][preview] == 0){
+                robGuideList.put(i-1, "NO");
+                preview =0;
+            }
+            System.out.println(i +" "+robGuideList.get(i));
+
+        }
+
+
+        return Math.max(profitRobFirst[n-1][0], profitRobFirst[n-1][1]);
+
     }
 
 
